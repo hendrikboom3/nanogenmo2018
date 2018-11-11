@@ -17,8 +17,15 @@ For applicatios, you will often want the variables in two expressions to be unif
 
 type exp interface{String() string}
 
+type operator string
+
+func (o vars)op(w string)operator { // TODO: an actual environment for oerators
+	return operator(w)
+}
+
+
 type apply struct{
-	fn int // TODO: not just integer, unless it's an index into some kind of operator table.  In which cse it shoule be a pointer to an operator struct -- and found in a table during reading.
+	fn operator  // TODO: not just integer, unless it's an index into some kind of operator table.  In which cse it shoule be a pointer to an operator struct -- and found in a table during reading.
 	arg []exp}
 
 type variable struct{value exp
@@ -34,21 +41,24 @@ func (s substitution) String() string{
                    For our purposes, it behaves exacly like a bute buffer, which is already avaailable in earlier versions of Go.
 		var sb strings.Builder
                 */
-
+		
 		var sb bytes.Buffer
 		sb.WriteString("[")
+		first := true
 		for key, value := range s {
+			if ! first {sb.WriteString("; ")}
+			first = false
 			sb.WriteString(key.String())
 			sb.WriteString("->")
 			sb.WriteString(value.String())
-			sb.WriteString("; ")
 		}
 		sb.WriteString("]")
 		return sb.String()
 	}
 }
+
 /* An example gleaned from the net
-   Ours has to be different in etail because we have static types and type tests.
+   Ours has to be different in detail because we have static types and type tests in the impementation language, and eventually also in the expressions.
 
 function UNIFY(x, y, theta) returns a substitution to make x and y identical
   inputs: x, a variable, constant, list, or compound expression
@@ -76,11 +86,22 @@ function UNIFY-VAR(var, x, theta) returns a substitution
 
 */
 
-func (e *apply)String()string{return "a" + format(e.arg)}
+func (e *apply)String()string{
+	return string(e.fn) + format(e.arg)
+}
 
 func (e *variable)String()string{return e.name}
 
-func format(e []exp)string{return "(" + e[0].String() + ")"}
+func format(e []exp)string{
+	var sb bytes.Buffer
+	sb.WriteString("[")
+	for i := 0; i<len(e); i++ {
+		if i > 0 { sb.WriteString(",") }
+		sb.WriteString(e[i].String())
+	}
+	sb.WriteString("]")
+	return sb.String()
+}
 
 func occurs(v *variable, e exp) bool {
 	// Does v occur in e?
