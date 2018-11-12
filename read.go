@@ -167,7 +167,7 @@ func (ll *lex)readrules()[]*rule{
 		ll.advance()
 		r = ll.readrule()
 		rr = append(rr, r)
-		fmt.Println("Expected rule.")
+		//  fmt.Println("Expected rule.")
 	}
 	fmt.Printf("got to position %d finding %d rules.\n", ll.pos, len(rr))
 	

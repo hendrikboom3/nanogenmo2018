@@ -15,7 +15,10 @@ For applicatios, you will often want the variables in two expressions to be unif
   THe unify function completely ifgnores variaabe names.  THey are there only for generating a slightly more readable form of debug output than might otherwiase be the case,
 */
 
-type exp interface{String() string}
+type exp interface{
+	String() string
+	subst(substitution) exp
+}
 
 type operator string
 
@@ -26,10 +29,12 @@ func (o vars)op(w string)operator { // TODO: an actual environment for oerators
 
 type apply struct{
 	fn operator  // TODO: not just integer, unless it's an index into some kind of operator table.  In which cse it shoule be a pointer to an operator struct -- and found in a table during reading.
-	arg []exp}
+	arg []exp
+}
 
 type variable struct{value exp
-	name string}
+	name string
+}
 
 
 type substitution map[*variable]exp
@@ -117,16 +122,16 @@ func occurs(v *variable, e exp) bool {
 	return false
 }
 
-func subst(s substitution, e exp)exp {
-	switch e := e.(type) {
-	case *variable:
+func (e *variable)subst(s substitution) exp{
 		val, ok := s[e]
 		if ok {return val} else {return e}
-	case *apply: // TODO: for efficiency, check if there are no changes.
+}
+
+func (e *apply)subst(s substitution) exp{
 		var changed = false;
 		nargs := make([]exp, len(e.arg))
 		for i := 0; i < len(e.arg); i++ {
-			nargs[i] = subst(s, e.arg[i])
+			nargs[i] = e.arg[i].subst(s) // subst(s, e.arg[i])
 			changed = changed || nargs[i] != e.arg[i] 
 		}
 		if changed {
@@ -135,8 +140,10 @@ func subst(s substitution, e exp)exp {
 			return e
 			// If noting ie e has been substituted, we return e itself, instead of a copy of e.
 		}
-	}
-	return nil // never executed, but here it is anyway.
+}
+
+func subst(s substitution, e exp)exp {
+	return e.subst(s)
 }
 
 func (s substitution)set(v *variable, val exp)substitution{
