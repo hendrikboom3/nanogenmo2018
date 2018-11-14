@@ -31,7 +31,7 @@ func testRules(t *testing.T, ruletxt string){
 		fmt.Println("testing rule", i, ":", rules[i]) 
 		if len(rules[i].consequent) == 0 {
 			fmt.Println("rule is final.")
-			tryrules(rules, rules[i].antecedent, 2, func(){fmt.Println("DONE")})
+			tryrules(rules, rules[i].antecedent, 3, func(){fmt.Println("DONE")})
 		}
 	}
 }
@@ -46,6 +46,7 @@ func TestMurder(t *testing.T){
 	rule1 := "loves[b,c],loves[c,d],kills[b,d]:;"
         state := ":loves[john[], mary[]];:loves[mary[],jim[]];"
 	intent := "findweapon[b, w]:kills[b, d];"
-	state2 :=  ":findweapon[john[], gun[]]."
-	testRules(t, rule1 + state + intent + state2)
+	state2 :=  ":findweapon[john[], sword[]];"
+	state3 :=  ":findweapon[john[], gun[]]."
+	testRules(t, rule1 + state + intent + state2 + state3)
 }

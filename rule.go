@@ -48,7 +48,7 @@ func rulesnest(rules[]*rule, a []exp, ai int, ss substitution, maxdepth int, aft
 	}
 	for i :=0; i < len(rules); i++ {
 		for j := 0; j < len(rules[i].consequent); j++ {
-			// fmt.Println(maxdepth, "utrying to unify", a[ai], " with ", rules[i].consequent[j], " after ", ss)
+			// fmt.Println(maxdepth, "trying to unify", a[ai], " with ", rules[i].consequent[j], " after ", ss)
 			ns := unify(ss.copy(), a[ai], rules[i].consequent[j])
 			if(ns != nil){ // have a possibiity
 				fmt.Println(maxdepth, strings.Repeat("  ", ai), "subst is", ns.String())
@@ -63,21 +63,17 @@ func rulesnest(rules[]*rule, a []exp, ai int, ss substitution, maxdepth int, aft
 }
 
 
-func proveoneantecedent(ante exp, substsofar substitution, fanout func(func(exp, *rule, int)), myact func(substsofar substitution), depth int){
+func proveoneantecedent(ante exp, substsofar substitution, fanout func(func(exp, *rule, int)), myact func(substsofar substitution, report func()), depth int){
 	// process one antecedent by confronting it with every consequent of every rule, as povided by fanout.  For each such success, call act.
 	fanout(
 		(func(c exp, rr *rule, index int){ // Maybe rule or even consequent index should also be parameters?
-			fmt.Println(depth, "confront ", ante, "with", c)
+			// fmt.Println(depth, "confront ", ante, "with", c)
 			newsubst := unify(substsofar.copy(), ante, c)
 			if newsubst == nil { return }
-			// newante := ante.subst(newsubst) // to be used instead of ante ??
-			if len(rr.antecedent) == 0 { // this one is grounded as fact // Suspect this is just a special case of the following one.
-				myact(newsubst)//nest(aa, i+1, newsubst, fanout, act, depth)
-			} else { // We have to handle premisses of this new rule.
-				fmt.Println(depth, "Consider rules for antecedents for ", ante  )
-				//newrulesubst := make(substitution)
-				nest(rr.antecedent, 0, newsubst/*newrulesubst*/, fanout,
-					func(endsubst substitution){
+			{ // We have to handle premisses of this new rule.
+				// fmt.Println(depth, "Consider rules for antecedents for ", ante  )
+				nest(rr.antecedent, 0, newsubst, fanout,
+					func(endsubst substitution, report func()){
 						// TODO: worry about bound rule-variable capture.
 						//       I suspect we need to rename all the variables in the nested rule before unifying.
 
@@ -85,32 +81,42 @@ func proveoneantecedent(ante exp, substsofar substitution, fanout func(func(exp,
 						//       This probably means completely substituting them out of ante
 						//       and then unifying substituted ante with original ante in context ot sustitution prior to ante.
 						// s := unify(substsofar, ante, newante)
-						myact(endsubst)
-						// nest(!!!aa, i+1, endsubst, fanout, act, depth)
+						myact(endsubst, func(){
+							report()
+							/* fmt.Println(" ||| ", subst(endsubst, ante)) */
+						})
 						// TODO: process the end substitution in some fashiom to use newly discovered intofmation
 					},
 					depth - 1)
-				fmt.Println(depth, "finishing rules for antecedents for ", ante)
+				// fmt.Println(depth, "finishing rules for antecedents for ", ante)
 			}
 		}))
 }
 
 	
-func nest(aa []exp, i int, substsofar substitution, fanout func(func(exp, *rule, int)), act func(substsofar substitution), depth int) { // process antecentents  aa from i on
+func nest(aa exps, i int, substsofar substitution, fanout func(func(exp, *rule, int)), act func(substsofar substitution, report func()), depth int) { // process antecentents  aa from i on
 	// by confronting every exp in aa with every consequent of every rule, as performed by fanout.
 	// Call act whenever you get to the end of aa.
+
 	if depth == 0 { fmt.Println("recursion limit reached"); return}
-	if len(aa) == 0{
-		fmt.Println("At start?end", aa)
-		// success();
-		return
-	}
+
 	if i >= len(aa) {
-		act(substsofar)
+		act(substsofar, func(){ /* fmt.Println("++++", aa.subst(substsofar))*/ })
 		return
 	}
 
-	proveoneantecedent(aa[i], substsofar, fanout, /*myact*/func(endsubst substitution){nest(aa, i+1, endsubst, fanout, act, depth)}, depth)
+	proveoneantecedent(aa[i], substsofar, fanout,
+		/*myact*/func(endsubst substitution, report1 func()){
+			nest(aa, i+1, endsubst, fanout,
+				func(substsofar substitution, report2 func()){
+					act(substsofar, func(){
+						report1();
+						fmt.Println("^^^", subst(substsofar, aa[i]));
+						report2()});
+					
+				}, depth)
+		},
+		depth)
 }
 
 
@@ -127,8 +133,11 @@ func tryrules(rules[]*rule, aa exps, depth int, success func()){
 	nest(aa, 0, newsubst,
 		/* fanout */(func(what func(c exp, r *rule, index int)){
 			forcons(rules, what)}),
-		/* act */ (func(substsofar substitution){
-			fmt.Println("antecedents", aa, "subst", substsofar, "yields", aa.subst(substsofar))}),
+		/* act */ (func(substsofar substitution, report func()){
+			// fmt.Println(depth, "antecedents", aa, "subst", substsofar, "yields", aa.subst(substsofar))
+			report()
+			success()
+		}),
 		depth /* arbitrary recursion depth limit */ )
 }
 
@@ -146,7 +155,6 @@ func oldtryrules(rules[]*rule, rr *rule, depth int, success func()){
 	if depth == 0 {
 		fmt.Println("depth limit reached.")
 		return 
-		//act(rr.consequent[i]) // probably wrong action
 	}
 	for i :=0; i < len(rules); i++ {
 		for j := 0; j < len(rules[i].consequent); j++ {
@@ -154,12 +162,6 @@ func oldtryrules(rules[]*rule, rr *rule, depth int, success func()){
 			fmt.Println(depth, "use rule ", rr, "on consequent" , rules[i].consequent[j], "of rule", rules[i])
 			rulesnest(rules, rr.antecedent, 0, s, depth,
 				(func(ns substitution){
-/*
-					if len(rr.consequent) == 0 { // WRONG!! this the right test for success only when forward chaining.  This function chains backward.
-						success()
-						fmt.Println(depth, "success?", rr)
-					}
-*/
 					for i := 0; i < len(rr.consequent); i++ {
 						fmt.Println(depth, "work on consequent", rr.consequent[i], "of rule", rr)
 						oldtryrules(rules, rules[i], depth-1,
@@ -168,7 +170,6 @@ func oldtryrules(rules[]*rule, rr *rule, depth int, success func()){
 								fmt.Println("doing consequent", rr.consequent[i], "of rule", rr)
 								success() // further out
 							})
-						// act(subst(ns, r.consequent[i]))
 					}
 				}))
 		}	
