@@ -28,7 +28,11 @@ func testRules(t *testing.T, ruletxt string){
 	// form, OK := (&lex{formtxt, 0}).readform(make(vars))
 	// if ! OK { t.Error("noform"); return }
 	for i := 0; i < len(rules); i++{
-		tryrules(rules, rules[i], 2, func(){fmt.Println("done")})
+		fmt.Println("testing rule", i, ":", rules[i]) 
+		if len(rules[i].consequent) == 0 {
+			fmt.Println("rule is final.")
+			tryrules(rules, rules[i].antecedent, 2, func(){fmt.Println("DONE")})
+		}
 	}
 }
 

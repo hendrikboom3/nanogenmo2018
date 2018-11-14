@@ -20,12 +20,13 @@ type exp interface{
 	subst(substitution) exp
 }
 
+type exps []exp
+
 type operator string
 
 func (o vars)op(w string)operator { // TODO: an actual environment for oerators
 	return operator(w)
 }
-
 
 type apply struct{
 	fn operator  // TODO: not just integer, unless it's an index into some kind of operator table.  In which cse it shoule be a pointer to an operator struct -- and found in a table during reading.
