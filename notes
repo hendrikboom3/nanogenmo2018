@@ -1,0 +1,103 @@
+2018 11 14:
+
+So with the rules
+
+	loves[b,c], loves[c,d], kills[b,d] : ;
+        : loves[john[], mary[]] ;
+	: loves[mary[],jim[]];
+	findweapon[b, w] : kills[b, d];
+	: findweapon[john[], sword[]];
+	: findweapon[john[], gun[]].
+
+I get the plots:
+
+	loves[john[],mary[]]
+	loves[mary[],jim[]]
+	findweapon[john[],sword[]]
+	kills[john[],jim[]]
+
+and
+
+	loves[john[],mary[]]
+	loves[mary[],jim[]]
+	findweapon[john[],gun[]]
+	kills[john[],jim[]]
+
+What I don't like about the rules is that in order to fire rule
+
+	findweapon[b, w] : kills[b, d];
+
+which says that findweaapon is a precondition for killing, I have to
+write the eternal triangle rule as
+
+        loves[b,c], loves[c,d], kills[b,d] : ;
+
+instead of
+
+	loves[b,c], loves[c,d] : kills[b,d] ;
+
+which expresses more intuitively that the the conclict between two
+loves causes the murder.
+
+I had to code it this way because an antecedent always is matched up
+with a consequent in a deduction chain.
+
+This is what made me think about plot threads -- we would just have two
+plot threads:
+
+	loves[b,c], loves[c,d], kills[b,d] ;
+and
+	findweapon[b, w], kills[b, d];
+	
+There are just two plot threads that happen to come together
+in the action kills[b, d].
+
+Now weaving plot threads together is one of the ways that complex narratives
+are composed of simple plot elements.
+
+But this in no way expresses that both rules express preconditions for the
+murder -- motive and opportunity.
+
+So ... Do I need to change the formalism, or just learn better how to use it?
+
+-- hendrik
+
+2018 11 15:
+
+I could have written
+
+	loves[b,c], loves[c,d]: motivetokill[b,d] : ;
+        : loves[john[], mary[]] ;
+	: loves[mary[],jim[]];
+	motivetokill[b, d], findweapon[b, w] : kills[b, d];
+	: findweapon[john[], sword[]];
+	: findweapon[john[], gun[]].
+
+And presumably there can be a lot more elabotation in this style.
+Perhaps this is a good way of writing it.
+I do notice that every one of these rules has only one consequent.
+This is just like in Prolog, although Prolog writes its consequents
+on the left.
+
+I have implemented rules with multiple consequents in the search process,
+but haven't put them together in the resulting plot.
+I suppose I should get around to figuring this out.
+
+There can be  actions that happen before and after the linked consequent,
+and this leads to a directed graph of actions and conditions.
+
+I'll have to figure it out if I try the plot-thread approach, too.
+So maybe the plot-thread mechanism is no mor difficult than to implement
+than the deductive one.
+The question is which better expresses plot ideas.
+There are still difficulties ensuring adequate causality with just plot threads.
+Maybe I'll have to have both.
+
+Weaving new threads into a complex plot
+has to be constrained to avoid temporal cycles.
+(I'm ignoring time travel stories here.)
+Now doing frequent topological sorts is unacceptably inefficient
+when the plot gets large.
+I could simply assign numerical times to every event,
+but that will seriously impede weaving flexibility.
+Could there be some relevant graph-theoretical algorithms?  Probably.
