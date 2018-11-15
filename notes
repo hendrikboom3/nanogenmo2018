@@ -1,3 +1,10 @@
+This is the development log for the plot calculus,
+currently partly here and partly on the nanogenmo site.
+I will edit old dated passages from time to time,
+mainly for typos and clarity.
+If you want to see truly older versions,
+look to old commits in the git repository.
+
 2018 11 14:
 
 So with the rules
@@ -36,7 +43,7 @@ instead of
 
 	loves[b,c], loves[c,d] : kills[b,d] ;
 
-which expresses more intuitively that the the conclict between two
+which expresses more intuitively that the the conflict between two
 loves causes the murder.
 
 I had to code it this way because an antecedent always is matched up

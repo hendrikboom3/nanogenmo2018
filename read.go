@@ -1,4 +1,4 @@
-package unify
+package plotcalculus
 import(
 	"io/ioutil"
 	"fmt"
